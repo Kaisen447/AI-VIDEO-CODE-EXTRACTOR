@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Subtitle Extractor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+        }
+        .loading {
+            display: none;
+        }
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+        }
+        .file-upload input[type=file] {
+            position: absolute;
+            font-size: 100px;
+            right: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .subtitle-block {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .hero-pattern {
+            background-color: #f9fafb;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a5b4fc' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="gradient-bg shadow-md text-white">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-closed-captioning text-2xl"></i>
+                <span class="text-xl font-bold">Video Subtitle Extractor</span>
+            </div>
+            <div class="text-sm">
+                <a href="#" class="hover:text-indigo-200 transition duration-300">About</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- Home Page View -->
+        <div id="home-view" class="block">
+            <section class="hero-pattern rounded-lg shadow-md p-8 mb-8">
+                <div class="text-center">
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Extract Subtitles from Videos</h1>
+                    <p class="text-gray-600 mb-6 max-w-2xl mx-auto">Upload your videos and automatically extract subtitles for transcripts, translations, or notes.</p>
+                    
+                    <div class="flex justify-center">
+                        <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data" class="w-full max-w-md">
+                            <div class="file-upload mb-4 w-full">
+                                <button type="button" class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition duration-300 flex items-center justify-center">
+                                    <i class="fas fa-cloud-upload-alt mr-2"></i>
+                                    <span>Choose Video File</span>
+                                </button>
+                                <input type="file" name="video_file" id="video-file" accept=".mp4,.avi,.mov,.mkv" class="cursor-pointer">
+                            </div>
+                            
+                            <div id="file-name" class="mb-4 text-left text-gray-700 text-sm hidden">
+                                <span class="font-medium">Selected file:</span> 
+                                <span id="selected-file-name"></span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2 text-left" for="frame-interval">
+                                    Subtitle Extraction Method:
+                                </label>
+                                <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="extraction-method">
+                                    <option value="ocr">OCR (Extract from video frames)</option>
+                                    <option value="embedded">Extract embedded subtitles</option>
+                                    <option value="auto">Automatic speech recognition</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline transition duration-300 flex items-center justify-center">
+                                <span>Extract Subtitles</span>
+                                <i class="fas fa-chevron-right ml-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">How It Works</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="flex flex-col items-center text-center">
+                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-file-video text-indigo-600 text-xl"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-700 mb-2">1. Upload Video</h3>
+                        <p class="text-gray-600">Upload your video with existing subtitles or let us generate them.</p>
+                    </div>
+                    
+                    <div class="flex flex-col items-center text-center">
+                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-closed-captioning text-indigo-600 text-xl"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-700 mb-2">2. Processing</h3>
+                        <p class="text-gray-600">Our system extracts subtitles using OCR, embedded subtitle tracks, or speech recognition.</p>
+                    </div>
+                    
+                    <div class="flex flex-col items-center text-center">
+                        <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-file-alt text-indigo-600 text-xl"></i>
+                        </div>
+                        <h3 class="font-bold text-gray-700 mb-2">3. Download Results</h3>
+                        <p class="text-gray-600">Get a complete transcript with timestamped subtitles in various formats.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">How to Use the Extracted Subtitles</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex items-start mb-3">
+                            <div class="mr-3 mt-1">
+                                <i class="fas fa-language text-green-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-700 mb-1">Create Translations</h3>
+                                <p class="text-gray-600">Extract subtitles to translate videos into different languages.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex items-start mb-3">
+                            <div class="mr-3 mt-1">
+                                <i class="fas fa-book text-blue-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-700 mb-1">Study Materials</h3>
+                                <p class="text-gray-600">Create text transcripts from educational videos for notes and review.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex items-start mb-3">
+                            <div class="mr-3 mt-1">
+                                <i class="fas fa-universal-access text-purple-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-700 mb-1">Accessibility</h3>
+                                <p class="text-gray-600">Make your videos accessible with accurate subtitle files.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="flex items-start mb-3">
+                            <div class="mr-3 mt-1">
+                                <i class="fas fa-search text-yellow-500 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-700 mb-1">Content Searchability</h3>
+                                <p class="text-gray-600">Make video content searchable with text transcripts.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <!-- Results View (Initially Hidden) -->
+        <div id="results-view" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Extracted Subtitles</h2>
+                    <button id="back-button" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded transition duration-300 flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        <span>Back</span>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <p><span class="font-medium">Source:</span> <span id="source-file">video.mp4</span></p>
+                    <p><span class="font-medium">Total duration:</span> <span id="video-duration">5:32</span></p>
+                    <p><span class="font-medium">Extracted lines:</span> <span id="line-count">24</span></p>
+                </div>
+                
+                <div id="subtitle-segments">
+                    <!-- Subtitle segments will be populated here -->
+                    <div class="subtitle-segment mb-6 border border-gray-200 rounded-lg">
+                        <div class="bg-gray-100 p-3 flex justify-between items-center border-b border-gray-200">
+                            <div class="flex items-center">
+                                <i class="fas fa-clock text-indigo-600 mr-2"></i>
+                                <span class="font-medium">Timestamp: </span>
+                                <span class="ml-1">00:00:15 - 00:00:18</span>
+                            </div>
+                            <div>
+                                <button class="copy-btn text-indigo-600 hover:text-indigo-800 transition duration-300">
+                                    <i class="far fa-copy mr-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <p class="subtitle-block bg-gray-50 p-3 rounded text-sm">Welcome to this tutorial on machine learning fundamentals.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="subtitle-segment mb-6 border border-gray-200 rounded-lg">
+                        <div class="bg-gray-100 p-3 flex justify-between items-center border-b border-gray-200">
+                            <div class="flex items-center">
+                                <i class="fas fa-clock text-indigo-600 mr-2"></i>
+                                <span class="font-medium">Timestamp: </span>
+                                <span class="ml-1">00:00:19 - 00:00:25</span>
+                            </div>
+                            <div>
+                                <button class="copy-btn text-indigo-600 hover:text-indigo-800 transition duration-300">
+                                    <i class="far fa-copy mr-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <p class="subtitle-block bg-gray-50 p-3 rounded text-sm">Today we'll cover the basic concepts that you need to understand before diving into more complex topics.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-8">
+                    <button id="download-txt" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition duration-300 mr-2">
+                        <i class="fas fa-file-download mr-2"></i>Download as TXT
+                    </button>
+                    <button id="download-srt" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition duration-300 mr-2">
+                        <i class="fas fa-file-download mr-2"></i>Download as SRT
+                    </button>
+                    <button id="download-vtt" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition duration-300">
+                        <i class="fas fa-file-download mr-2"></i>Download as VTT
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Success Notification -->
+            <div id="download-notification" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg hidden">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span id="notification-message">Subtitles successfully downloaded!</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                <div class="mb-4">
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-800">Processing Video</h3>
+                <p class="text-gray-600 mt-2">Extracting subtitles from video...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6 mt-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-closed-captioning text-xl"></i>
+                        <span class="text-lg font-bold">Video Subtitle Extractor</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-1">Extract subtitles from videos with ease</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-linkedin text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="text-center mt-4 text-gray-400 text-sm">
+                &copy; 2025 Video Subtitle Extractor. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Store extracted subtitle segments
+        let extractedSubtitles = [
+            {
+                timestamp: "00:00:15 - 00:00:18",
+                text: "Welcome to this tutorial on machine learning fundamentals."
+            },
+            {
+                timestamp: "00:00:19 - 00:00:25",
+                text: "Today we'll cover the basic concepts that you need to understand before diving into more complex topics."
+            },
+            {
+                timestamp: "00:00:26 - 00:00:32",
+                text: "Machine learning is a subset of artificial intelligence that focuses on developing systems that learn from data."
+            },
+            {
+                timestamp: "00:00:33 - 00:00:40",
+                text: "Rather than being explicitly programmed, these systems identify patterns and make decisions based on examples."
+            }
+        ];
+        
+        // Display file name when selected
+        document.getElementById('video-file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : '';
+            if (fileName) {
+                document.getElementById('selected-file-name').textContent = fileName;
+                document.getElementById('file-name').classList.remove('hidden');
+            } else {
+                document.getElementById('file-name').classList.add('hidden');
+            }
+        });
+        
+        // Form submission and loading overlay
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            // Simulate processing time
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('home-view').classList.add('hidden');
+                document.getElementById('results-view').classList.remove('hidden');
+                
+                // Update source file name
+                const fileName = document.getElementById('video-file').files[0] ? 
+                    document.getElementById('video-file').files[0].name : 'sample_video.mp4';
+                document.getElementById('source-file').textContent = fileName;
+                
+                // Update line count
+                document.getElementById('line-count').textContent = extractedSubtitles.length;
+                
+                // In a real implementation, this would be populated from the backend response
+                populateSubtitleSegments(extractedSubtitles);
+            }, 2000);
+        });
+        
+        // Back button functionality
+        document.getElementById('back-button').addEventListener('click', function() {
+            document.getElementById('results-view').classList.add('hidden');
+            document.getElementById('home-view').classList.remove('hidden');
+        });
+        
+        // Populate subtitle segments
+        function populateSubtitleSegments(segments) {
+            const container = document.getElementById('subtitle-segments');
+            container.innerHTML = '';
+            
+            segments.forEach((segment, index) => {
+                const segmentDiv = document.createElement('div');
+                segmentDiv.className = 'subtitle-segment mb-6 border border-gray-200 rounded-lg';
+                segmentDiv.innerHTML = `
+                    <div class="bg-gray-100 p-3 flex justify-between items-center border-b border-gray-200">
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-indigo-600 mr-2"></i>
+                            <span class="font-medium">Timestamp: </span>
+                            <span class="ml-1">${segment.timestamp}</span>
+                        </div>
+                        <div>
+                            <button class="copy-btn text-indigo-600 hover:text-indigo-800 transition duration-300" data-index="${index}">
+                                <i class="far fa-copy mr-1"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <p class="subtitle-block bg-gray-50 p-3 rounded text-sm">${segment.text}</p>
+                    </div>
+                `;
+                container.appendChild(segmentDiv);
+            });
+            
+            // Add event listeners to copy buttons
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    navigator.clipboard.writeText(extractedSubtitles[index].text);
+                    
+                    // Change button text temporarily
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check mr-1"></i> Copied!';
+                    
+                    setTimeout(() => {
+                        this.innerHTML = originalText;
+                    }, 2000);
+                });
+            });
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('download-notification');
+            document.getElementById('notification-message').textContent = message;
+            notification.classList.remove('hidden');
+            
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // Download as TXT
+        document.getElementById('download-txt').addEventListener('click', function() {
+            // Create text content
+            let content = "EXTRACTED SUBTITLES\n";
+            content += "===================\n\n";
+            
+            extractedSubtitles.forEach(segment => {
+                content += `[${segment.timestamp}]\n`;
+                content += `${segment.text}\n`;
+                content += "------------------------\n\n";
+            });
+            
+            // Create and trigger download
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'video_subtitles.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification("Subtitles successfully downloaded as TXT!");
+        });
+        
+        // Download as SRT
+        document.getElementById('download-srt').addEventListener('click', function() {
+            // Create SRT content
+            let content = "";
+            
+            extractedSubtitles.forEach((segment, index) => {
+                const [startStr, endStr] = segment.timestamp.split(' - ');
+                const startParts = startStr.split(':');
+                const endParts = endStr.split(':');
+                
+                // Convert to SRT time format (HH:MM:SS,mmm)
+                const startTime = `${startParts[0]}:${startParts[1]}:${startParts[2]},000`;
+                const endTime = `${endParts[0]}:${endParts[1]}:${endParts[2]},000`;
+                
+                content += `${index + 1}\n`;
+                content += `${startTime} --> ${endTime}\n`;
+                content += `${segment.text}\n\n`;
+            });
+            
+            // Create and trigger download
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'video_subtitles.srt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification("Subtitles successfully downloaded as SRT!");
+        });
+        
+        // Download as VTT
+        document.getElementById('download-vtt').addEventListener('click', function() {
+            // Create WebVTT content
+            let content = "WEBVTT\n\n";
+            
+            extractedSubtitles.forEach((segment, index) => {
+                const [startStr, endStr] = segment.timestamp.split(' - ');
+                
+                content += `${index + 1}\n`;
+                content += `${startStr}.000 --> ${endStr}.000\n`;
+                content += `${segment.text}\n\n`;
+            });
+            
+            // Create and trigger download
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'video_subtitles.vtt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification("Subtitles successfully downloaded as VTT!");
+        });
+    </script>
+</body>
+</html>
